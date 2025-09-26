@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 )
 
@@ -13,23 +12,19 @@ func recurse(n int) {
 	_ = buf
 
 	depth = n
+
+	if n%10000 == 0 {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+		fmt.Printf("depth=%d | StackInuse=%dKB | HeapAlloc=%dKB\n",
+			n, m.StackInuse/1024, m.HeapAlloc/1024)
+	}
+
 	recurse(n + 1)
 }
 
 func main() {
 	fmt.Println("start go recurse test")
-
-	defer func() {
-		if r := recover(); r != nil {
-			var m runtime.MemStats
-			runtime.ReadMemStats(&m)
-			fmt.Fprintf(os.Stderr,
-				">>> CRASH at depth=%d | StackInuse=%dKB | HeapAlloc=%dKB\n",
-				depth, m.StackInuse/1024, m.HeapAlloc/1024)
-			fmt.Fprintln(os.Stderr, r)
-			os.Exit(1)
-		}
-	}()
 
 	done := make(chan struct{})
 	go func() {
